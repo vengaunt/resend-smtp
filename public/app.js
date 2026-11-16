@@ -37,7 +37,10 @@ async function loadConfig() {
   }
 
   if (result.domainError) {
-    configStatus.textContent = `API key set, domain check failed: ${result.domainError}`;
+    const staleKey = /invalid/i.test(result.domainError)
+      ? ' Restart the local server after changing .env.'
+      : '';
+    configStatus.textContent = `Resend rejected the request: ${result.domainError}.${staleKey}`;
     configStatus.className = 'status error';
     return;
   }

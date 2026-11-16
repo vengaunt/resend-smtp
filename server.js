@@ -1,5 +1,7 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
 import express from 'express';
+
+dotenv.config({ override: true, quiet: true });
 import helmet from 'helmet';
 import { randomUUID } from 'node:crypto';
 import { readStore, updateStore, upsertById } from './lib/store.js';

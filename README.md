@@ -35,6 +35,8 @@ npm run dev
 
 Open `http://localhost:3000`.
 
+If you change `.env` while the server is running, stop it and start it again. The running process keeps the old key.
+
 ## What you can do
 
 - Sync received mail for the domains your API key can access
