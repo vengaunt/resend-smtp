@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Local Resend Mailbox</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Local only</p>
+        <h1>Resend Mailbox</h1>
+      </div>
+      <div id="configStatus" class="status">Checking config...</div>
+    </header>
+
+    <main class="layout">
+      <section class="panel sidebar">
+        <h2>Inbox</h2>
+        <div class="actions">
+          <button id="syncInbox">Sync inbox</button>
+          <button id="refreshInbox" class="secondary">Refresh</button>
+        </div>
+        <label>
+          Search
+          <input id="searchInput" type="search" placeholder="sender, subject, body" />
+        </label>
+        <label>
+          Recipient/domain filter
+          <input id="recipientFilter" placeholder="info@example.com or example.com" />
+        </label>
+        <div id="inboxStatus" class="muted"></div>
+        <div id="messageList" class="message-list"></div>
+      </section>
+
+      <section class="panel message-panel">
+        <div id="messageDetail" class="empty-state">
+          Select a message from the inbox.
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Send email</h2>
+        <form id="sendForm" class="stack">
+          <label>
+            From
+            <input name="from" placeholder="Your Name <info@example.com>" required />
+          </label>
+          <label>
+            To
+            <textarea name="to" rows="2" placeholder="person@example.com, team@example.com" required></textarea>
+          </label>
+          <label>
+            Subject
+            <input name="subject" required />
+          </label>
+          <label>
+            Text body
+            <textarea name="text" rows="7" placeholder="Plain text message"></textarea>
+          </label>
+          <label>
+            HTML body
+            <textarea name="html" rows="7" placeholder="<p>Optional HTML</p>"></textarea>
+          </label>
+          <button type="submit">Send</button>
+          <div id="sendStatus" class="muted"></div>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h2>CSV bulk send</h2>
+        <p class="muted">CSV needs an `email` or `to` column. Optional per-row columns: `subject`, `text`, `html`.</p>
+        <form id="bulkForm" class="stack">
+          <label>
+            From
+            <input name="from" placeholder="Updates <info@example.com>" required />
+          </label>
+          <label>
+            Default subject
+            <input name="subject" required />
+          </label>
+          <label>
+            Default text body
+            <textarea name="text" rows="5"></textarea>
+          </label>
+          <label>
+            Default HTML body
+            <textarea name="html" rows="5"></textarea>
+          </label>
+          <label>
+            CSV file
+            <input id="csvFile" type="file" accept=".csv,text/csv" required />
+          </label>
+          <div id="csvPreview" class="preview"></div>
+          <button type="submit">Start bulk send</button>
+          <div id="bulkStatus" class="muted"></div>
+        </form>
+      </section>
+
+      <section class="panel wide">
+        <h2>Send history</h2>
+        <div id="history" class="history"></div>
+      </section>
+    </main>
+
+    <script src="/app.js" defer></script>
+  </body>
+</html>

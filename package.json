@@ -1,0 +1,19 @@
+{
+  "name": "resend-smtp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch server.js",
+    "start": "node server.js",
+    "check": "node --check server.js && node --check lib/store.js && node --check lib/resend.js && node --check public/app.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "helmet": "^8.3.0"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  }
+}
