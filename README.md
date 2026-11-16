@@ -41,8 +41,8 @@ If you change `.env` while the server is running, stop it and start it again. Th
 
 - Sync received mail for the domains your API key can access
 - Filter the local inbox by address or domain
-- Send one email to one or more people
-- Import a CSV and send it in chunks
+- Send one email to one or more people through SMTP
+- Import a CSV and send one SMTP message per row
 
 The from address has to be on a verified Resend domain, like `info@yourdomain.com`.
 
@@ -68,7 +68,8 @@ grace@example.com,Hello,Hi Grace
 
 - Do not commit `.env`. It holds your API key.
 - `data/` is local app data and is gitignored.
-- SMTP fields in `.env` are optional notes. Sending goes through the Resend API.
+- Sending goes through SMTP (`smtp.resend.com` by default). The inbox still uses the Resend API, because SMTP cannot fetch received mail.
+- For Resend SMTP, the username is `resend` and the password is your API key. Set `SMTP_PASSWORD` only when you want a different password.
 
 ## License
 

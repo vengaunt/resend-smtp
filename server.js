@@ -12,12 +12,11 @@ import {
   listReceivedEmails,
   listVerifiedDomains,
   normalizeEmailList,
-  sendBatchEmail,
-  sendEmail,
   toStoredMessage,
   validateSender,
   wait,
 } from './lib/resend.js';
+import { isSmtpConfigured, sendSmtp, smtpSettings } from './lib/smtp.js';
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -41,15 +40,16 @@ app.use(express.json({ limit: '5mb' }));
 app.use(express.static('public', { extensions: ['html'] }));
 
 app.get('/api/config', async (_req, res) => {
+  const settings = smtpSettings();
   const domains = isResendConfigured() ? await listVerifiedDomains() : { data: [], error: null };
 
   res.json({
     resendConfigured: isResendConfigured(),
     smtp: {
-      host: process.env.SMTP_HOST || '',
-      port: process.env.SMTP_PORT || '',
-      username: process.env.SMTP_USERNAME || '',
-      configured: Boolean(process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USERNAME),
+      host: settings.host,
+      port: settings.port,
+      username: settings.username,
+      configured: isSmtpConfigured(),
     },
     domains: domains.data,
     domainError: domains.error?.message || null,
@@ -141,13 +141,13 @@ app.post('/api/send', async (req, res) => {
 
   const id = randomUUID();
   const payload = validation.payload;
-  const result = await sendEmail(payload, `single/${id}`);
+  const result = await sendSmtp(payload);
   const record = {
     id,
     ...payload,
     status: result.error ? 'failed' : 'sent',
     error: result.error?.message || null,
-    resendResult: result.data,
+    smtpResult: result.data,
     createdAt: new Date().toISOString(),
   };
 
@@ -193,37 +193,32 @@ app.post('/api/bulk', async (req, res) => {
     succeeded: 0,
     failed: 0,
     status: 'running',
-    rows: recipients.map((row) => ({ ...row, status: 'pending', error: null, resendResult: null })),
+    rows: recipients.map((row) => ({ ...row, status: 'pending', error: null, smtpResult: null })),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
 
-  const chunks = chunk(job.rows, 100);
-
-  for (let index = 0; index < chunks.length; index += 1) {
-    const chunkRows = chunks[index];
-    const emails = chunkRows.map((row) => ({
+  for (let index = 0; index < job.rows.length; index += 1) {
+    const row = job.rows[index];
+    const result = await sendSmtp({
       from: req.body.from,
       to: [row.to],
       subject: row.subject,
       ...(row.html ? { html: row.html } : {}),
       ...(row.text ? { text: row.text } : {}),
-    }));
-    const result = await sendBatchEmail(emails, `bulk/${job.id}/chunk-${index}`);
+    });
 
-    for (const row of chunkRows) {
-      if (result.error) {
-        row.status = 'failed';
-        row.error = result.error.message;
-        job.failed += 1;
-      } else {
-        row.status = 'sent';
-        row.resendResult = result.data;
-        job.succeeded += 1;
-      }
+    if (result.error) {
+      row.status = 'failed';
+      row.error = result.error.message;
+      job.failed += 1;
+    } else {
+      row.status = 'sent';
+      row.smtpResult = result.data;
+      job.succeeded += 1;
     }
 
-    if (index < chunks.length - 1) await wait(600);
+    if (index < job.rows.length - 1) await wait(600);
   }
 
   job.status = job.failed > 0 ? 'completed_with_errors' : 'completed';
@@ -273,10 +268,3 @@ async function validateSendPayload(body) {
   };
 }
 
-function chunk(items, size) {
-  const chunks = [];
-  for (let index = 0; index < items.length; index += size) {
-    chunks.push(items.slice(index, index + size));
-  }
-  return chunks;
-}

@@ -45,8 +45,14 @@ async function loadConfig() {
     return;
   }
 
+  if (!result.smtp?.configured) {
+    configStatus.textContent = 'SMTP is not configured. Set SMTP_HOST, SMTP_PORT, and SMTP_USERNAME in .env.';
+    configStatus.className = 'status error';
+    return;
+  }
+
   const domains = result.domains.length ? result.domains.join(', ') : 'no verified domains found';
-  configStatus.textContent = `API key set. Domains: ${domains}`;
+  configStatus.textContent = `Sending through SMTP ${result.smtp.host}:${result.smtp.port}. Domains: ${domains}`;
   configStatus.className = 'status ok';
 }
 
@@ -153,16 +159,17 @@ function renderSelectedMessage() {
 
 async function sendEmail(event) {
   event.preventDefault();
-  const form = new FormData(event.currentTarget);
+  const form = event.currentTarget;
+  const data = new FormData(form);
   sendStatus.textContent = 'Sending...';
 
   try {
     const result = await api('/api/send', {
       method: 'POST',
-      body: JSON.stringify(Object.fromEntries(form.entries())),
+      body: JSON.stringify(Object.fromEntries(data.entries())),
     });
-    sendStatus.textContent = `Sent. Local ID: ${result.send.id}`;
-    event.currentTarget.reset();
+    sendStatus.textContent = `Sent through SMTP. Local ID: ${result.send.id}`;
+    form.reset();
     await loadHistory();
   } catch (error) {
     sendStatus.textContent = error.message;
